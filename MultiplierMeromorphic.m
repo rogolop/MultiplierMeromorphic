@@ -9,11 +9,12 @@ import "SingularitiesDim2/IntegralClosure.m": Unloading;
 
 
 
-intrinsic LogResolutionMeromorphic(I::RngMPolLoc : Coefficients := false) -> []
+intrinsic LogResolutionMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt : Coefficients := false) -> []
 { Computes the weighted cluster of base points of a bivariate
   polynomial ideal I }
   // Generators in G & fixed part F.
-  G := Basis(I); F := Gcd(G); G := [ExactQuotient(g, F) : g in G];
+  G := [f, g]; //Basis(I);
+  F := Gcd(G); G := [ExactQuotient(h, F) : h in G];
 
   ////////////// Compute all information ////////////////
   S := PuiseuxExpansion(G: Polynomial := true);
@@ -141,14 +142,14 @@ end intrinsic;
 // end intrinsic;
 
 
-intrinsic MultiplierIdealsMeromorphic_f(I::RngMPolLoc : MinJN:=0, MaxJN:=1, ComputeIdeals:=true) -> []
+intrinsic MultiplierIdealsMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt : MinJN:=0, MaxJN:=1, ComputeIdeals:=true) -> []
 { Computes the Multiplier Ideals and its associated Jumping Number for an
   plane curve in a smooth complex surface using the algorithm
   of Alberich-Alvarez-Dachs }
 
   // With the extra point there is no confusion whether and affine component
   // has multiplicity or not.
-  P, E, _, C, Excess_f := LogResolutionMeromorphic(I: Coefficients := true);
+  P, E, _, C, Excess_f := LogResolutionMeromorphic(f, g: Coefficients := true);
   // printf "----------------\n";
   // printf "P = \n%o\n", P;
   // printf "E = \n%o\n", E;
@@ -160,8 +161,8 @@ intrinsic MultiplierIdealsMeromorphic_f(I::RngMPolLoc : MinJN:=0, MaxJN:=1, Comp
   PQ := ChangeRing(P, QQ);
   ZZ := Integers();
   PQTinv := Transpose(PQ)^-1;
-  // k := Parent(f);
-  k := Universe(Basis(I));
+  k := Parent(f);
+  // k := Universe(Basis(I));
   n := Ncols(P);
   // Compute relative canonical divisor.
   K := Matrix([[QQ | 1 : i in [1..n]]]);
