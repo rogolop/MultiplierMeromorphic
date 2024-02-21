@@ -1,0 +1,213 @@
+
+
+
+import "SingularitiesDim2/ProximityMatrix.m": ProximityMatrixImpl, CoefficientsVectorBranch;
+import "SingularitiesDim2/LogResolution.m": ComputeLogResolutionData, ExpandWeightedCluster;
+import "SingularitiesDim2/IntegralClosure.m": Unloading; 
+// IntegralClosureIrreducible, ProductIdeals, ClusterFactorization;
+
+
+
+
+intrinsic LogResolutionMeromorphic(I::RngMPolLoc : Coefficients := false) -> []
+{ Computes the weighted cluster of base points of a bivariate
+  polynomial ideal I }
+  // Generators in G & fixed part F.
+  G := Basis(I); F := Gcd(G); G := [ExactQuotient(g, F) : g in G];
+
+  ////////////// Compute all information ////////////////
+  S := PuiseuxExpansion(G: Polynomial := true);
+  P, EE, CC := ProximityMatrixImpl([*<s[1], 1> : s in S*]: ExtraPoint := true);
+  
+  // printf "LogResolutionMeromorphic EE = \n%o\n", EE;
+
+  E := []; // Multiplicities of each generator.
+  C := []; // Coefficients of BP(I).
+  V := []; // Vector a values for each generator.
+  v := []; // Virtual values of BP(I).
+  ComputeLogResolutionData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v);
+
+  /////////////// Add new free points /////////////////////
+  lastFree := [i : i in [1..Ncols(P)] | (&+P[1..Ncols(P)])[i] eq 1];
+  points2test := #lastFree; idx := 1;
+  // For each last free point on a branch...
+  while points2test gt 0 do
+    // Values for each gen. at p.
+    p := lastFree[idx]; Vp := [vi[1][p] : vi in V];
+    // Generators achieving the minimum.
+    GG := [i : i in [1..#Vp] | Vp[i] eq Min(Vp)];
+    // If the multiplicities of all the generators achieving the minimum
+    // at p is > 0 add new point.
+    if &and[E[g][1][p] ne 0 : g in GG] then
+      // The (unique) branch of the generator 'g' where 'p' belongs.
+      assert(#[i : i in [1..#EE] | EE[i][1, p] ne 0] eq 1);
+      b := [i : i in [1..#EE] | EE[i][1, p] ne 0][1];
+      ExpandWeightedCluster(~P, ~EE, ~CC, ~S, b); P[Ncols(P)][p] := -1;
+      ComputeLogResolutionData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v);
+      // We may need to add more free points after the points we added.
+      lastFree cat:= [Ncols(P)]; points2test := points2test + 1;
+    end if;
+  points2test := points2test - 1; idx := idx + 1;
+  end while;
+
+  /////////////// Add new satellite points /////////////////////
+  points2test := Ncols(P) - 1; p := 2; // Do not start at the origin.
+  while points2test gt 0 do
+    // Values for the generators at point p.
+    Vp := [vi[1][p] - v[1][p] : vi in V];
+    // Points p is proximate to && Points proximate to p.
+    p_prox := [i : i in [1..Ncols(P)] | P[p][i] eq -1];
+    prox_p := [i : i in [1..Ncols(P)] | P[i][p] eq -1];
+    Q := [q : q in p_prox | &+Eltseq(Submatrix(P, prox_p, [q])) eq 0];
+    for q in Q do
+      // Values for the generators at point q.
+      Vq := [vi[1][q] - v[1][q] : vi in V];
+      if &*[Vp[i] + Vq[i] : i in [1..#Vp]] ne 0 then
+        ExpandWeightedCluster(~P, ~EE, ~CC, ~S, -1);
+        P[Ncols(P)][p] := -1; P[Ncols(P)][q] := -1;
+        ComputeLogResolutionData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v);
+        // We may need to add more satellite points after the points we added.
+        points2test := points2test + 1;
+      end if;
+    end for;
+  points2test := points2test - 1; p := p + 1;
+  end while;
+
+  /////////////// Remove non base points ////////////////
+  // Multiplicities for the cluster of base points.
+  e := v * Transpose(P);
+  // I := [i : i in [1..Ncols(P)] ]; // | e[1][i] ne 0
+  // Remove points not in the cluster of base points.
+  // P := Submatrix(P, I, I); v := Submatrix(v, [1], I); C := C[I];
+
+  // Select 1 as affine part iff F is a unit.
+  F := Evaluate(F, <0, 0>) ne 0 select Parent(F)!1 else F;
+  
+  
+  
+  A := V[1];
+  B := V[2];
+  
+  // printf "e = %o\n", e;
+  // printf "v = %o\n", v;
+  // printf "A = %o\n", A;
+  // printf "eA = %o\n", A * Transpose(P);
+  Excess_f := A* Transpose(P)*P;
+  // printf "B = %o\n", B;
+  // printf "eB = %o\n", B * Transpose(P);
+  
+  // AmB := Matrix(IntegerRing(), 1, Ncols(A), [Max([A[1,i]-B[1,i], 0]) : i in [1..Ncols(A)]]);
+  AmB := ZeroMatrix(IntegerRing(), 1, Ncols(P));
+  for i in [1..Ncols(P)] do AmB[1][i] := Max([A[1,i]-B[1,i], 0]); end for;
+  
+  if Coefficients then return P, AmB, F, C, Excess_f;
+  else return P, AmB, F, Excess_f; end if;
+end intrinsic;
+
+
+
+
+
+
+// intrinsic MultiplierIdealsMeromorphic_I(I::RngMPolLoc : MaxJN := 1) -> []
+// { Computes the Multiplier Ideals and its associated Jumping Number for an
+//   m-primary ideal in a smooth complex surface using the algorithm
+//   of Alberich-Alvarez-Dachs }
+// // TODO: Fix this requiriment. This would involve getting the proximity matrix
+// // of a non m-primary ideal. This means merging the affine part resolution.
+// require Gcd(Basis(I)) eq 1: "Ideal must be m-primary";
+
+//   P, F, _, C := LogResolutionMeromorphic(I: Coefficients := true);
+//   QQ := Rationals();
+//   F := ChangeRing(Matrix(F), QQ);
+//   PQ := ChangeRing(P, QQ);
+//   ZZ := Integers();
+//   PQTinv := Transpose(PQ)^-1;
+//   k := Universe(Basis(I));
+//   n := Ncols(P);
+//   // Compute relative canonical divisor.
+//   K := Matrix([[QQ | 1 : i in [1..n]]]);
+//   K := K*PQTinv;
+//   // Compute the intersection matrix
+//   N := Transpose(PQ)*PQ;
+
+//   JN := 0; S := [];
+//   while JN lt MaxJN do
+//     D := Unloading(N, Matrix([[QQ | Floor(ei) : ei in Eltseq(JN*F - K)]]));
+//     lastJN := JN;
+//     JN, i := Min([(K[1][i] + 1 + D[1][i])/F[1][i] : i in [1..n] | F[1][i] ne 0]);
+//     S cat:= [<GeneratorsOXD(P, ChangeRing(D, ZZ), C, k), lastJN>];
+//   end while; return S;
+// end intrinsic;
+
+
+intrinsic MultiplierIdealsMeromorphic_f(I::RngMPolLoc : MinJN:=0, MaxJN:=1, ComputeIdeals:=true) -> []
+{ Computes the Multiplier Ideals and its associated Jumping Number for an
+  plane curve in a smooth complex surface using the algorithm
+  of Alberich-Alvarez-Dachs }
+
+  // With the extra point there is no confusion whether and affine component
+  // has multiplicity or not.
+  P, E, _, C, Excess_f := LogResolutionMeromorphic(I: Coefficients := true);
+  // printf "----------------\n";
+  // printf "P = \n%o\n", P;
+  // printf "E = \n%o\n", E;
+  // printf "Excess_f = \n%o\n", Excess_f;
+  
+  // P, E, C := ProximityMatrix(f: Coefficients := true, ExtraPoint := true);
+  QQ := Rationals();
+  EQ := ChangeRing(E, QQ);
+  PQ := ChangeRing(P, QQ);
+  ZZ := Integers();
+  PQTinv := Transpose(PQ)^-1;
+  // k := Parent(f);
+  k := Universe(Basis(I));
+  n := Ncols(P);
+  // Compute relative canonical divisor.
+  K := Matrix([[QQ | 1 : i in [1..n]]]);
+  K := K*PQTinv;
+  // printf "K = \n%o\n", K;
+  
+  F := EQ;
+  // F := EQ*PQTinv;
+  
+  // Compute the extended intersection matrix by the stict transform components.
+  N := Transpose(PQ)*PQ;
+  StrF := Excess_f;
+  // StrF := EQ*PQ;
+  nAffComp := #[1 : i in [1..n] | StrF[1][i] ne 0];
+  N := DiagonalJoin(N, ZeroMatrix(QQ, nAffComp)); //-IdentityMatrix(QQ, nAffComp));
+  idxAff := [i : i in [1..n] | StrF[1][i] ne 0];
+  for i in [1..nAffComp] do N[n + i][idxAff[i]] := -1; end for;
+  // for i in [1..nAffComp] do N[n + i][idxAff[i]] := -StrF[1][idxAff[i]]; end for;
+  // printf "N = \n%o\n", N;
+  
+  // F := HorizontalJoin(F, Matrix(QQ, [[1 : i in [1..nAffComp]]]));
+  F := HorizontalJoin(F, Matrix(QQ, [[StrF[1][i] : i in idxAff]]));
+  K := HorizontalJoin(K, Matrix(QQ, [[0 : i in [1..nAffComp]]]));
+
+  // printf "F = %o\n", F;
+
+  JN := MinJN; S := [];
+  while JN lt MaxJN do
+    printf ".";
+    D := Unloading(N, Matrix([[QQ | Max([Floor(ei)]) : ei in Eltseq(JN*F - K)]]));
+    // printf "JN*F - K = %o\n", Matrix([[QQ | Max([Floor(ei)]) : ei in Eltseq(JN*F - K)]]);
+    // printf "D = %o\n", D;
+    lastJN := JN;
+    JN, i := Min([(K[1][i] + 1 + D[1][i])/F[1][i] : i in [1..(n+nAffComp)] | F[1][i] gt 0]);
+    // printf "%o\n", [(K[1][i] + 1 + D[1][i])/F[1][i] : i in [1..(n+nAffComp)] | F[1][i] ne 0];
+    // printf "JN = %o, i = %o\n", JN, i;
+    
+    DZZ := ColumnSubmatrix(ChangeRing(D, ZZ), n);
+    if ComputeIdeals then
+      S cat:= [<GeneratorsOXD(P, DZZ, C, k), lastJN>];
+    else
+      S cat:= [<0, lastJN>];
+    end if;
+  end while; return S;
+end intrinsic;
+
+
+
+
