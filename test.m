@@ -3,13 +3,15 @@ Attach("MultiplierMeromorphic.m");
 P<x, y> := LocalPolynomialRing(RationalField(), 2, "lglex");
 
 // Settings
-quitWhenFinished   := false;
-printToFile        := false;
-outFileNamePrefix  := "examples/";
-outFileNameSufix   := ".txt";
-
-MinJN := 0;
-MaxJN := 5;
+printToFile       := false;
+quitWhenFinished  := true;
+outFileNamePrefix := "examples/";
+outFileNameSufix  := ".txt";
+MinJN             := 0;
+MaxJN             := 3;
+ComputeIdeals     := true;
+printJN           := true;
+printJN_fract     := true;
 
 ////////////////////
 
@@ -50,14 +52,30 @@ A := [];
 // Append(~A, "(y^2-x^3)^5 + x^18, (y^2-x^3)^3");
 // Append(~A, "(y^2-x^3)^5 + x^18, (y^2-x^3)^4");
 // Append(~A, "(y^2-x^3)^5 + x^18, (y^2-x^3)^5");
-
 // Append(~A, "(y^2-x^3)^5 + x^18, y^2+x^3");
+// Append(~A, "(y^2-x^3)^5 + x^18, x^2+y^3");
 
-// Append(~A, "(y^2-x^3)^4 + x^8*y^5, 1");
 // Append(~A, "(y^2-x^3)^4 + x^8*y^5, y^2-x^3");
+Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^1");
+// Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^2");
+// Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^3");
+// Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^4");
 // Append(~A, "(y^2-x^3)^4 + x^8*y^5, y^2+x^3");
+// Append(~A, "(y^2-x^3)^4 + x^8*y^5, y^8*x^8");
+// Append(~A, "(y^2-x^3)^4 + x^8*y^5, y^8*x");
+// Append(~A, "(y^2-x^3)^4 + x^8*y^5, y^8");
+// Append(~A, "(y^2-x^3)^4 + x^8*y^5, 1");
 
 
+// Append(~A, "x^3*(x+y)^5, y^2");
+// Append(~A, "x^3*(x+y)^5*(y^2-x^3)^7, y^2");
+// Append(~A, "x*(x+y)*(y^2-x^3), y^2");
+// Append(~A, "x^6*(x^2-y^3)^4 , (x-y^3)^9");
+
+// Append(~A, "(x^2+y^3)^4, (y^2-x^3)^2");
+// Append(~A, "(x^2+y^3)^4, (y^2-x^3)*(y^2-2*x^3)");
+
+// Append(~A, "((y^2-x^3)^5 + x^18)*(y^6-x^11), (y^2-x^3)^3*y^3");
 
 
 for s in A do
@@ -77,9 +95,9 @@ for s in A do
     printf "f = %o\n", Split(s, ",")[1];
     printf "g =%o\n", Split(s, ",")[2];
     
-    if printToFile then
-        UnsetOutputFile();
-    end if;
+    // if printToFile then
+    //     UnsetOutputFile();
+    // end if;
     
     // printf "\nIdeal I=<%o, %o>\n", Basis(I)[1], Basis(I)[2];
     
@@ -99,11 +117,23 @@ for s in A do
     // printf "\n### MultiplierIdeals f\n";
     
     ////////////////////
-    S := MultiplierIdealsMeromorphic(f, g : MinJN:=MinJN, MaxJN:=MaxJN, ComputeIdeals:=false);
+    S := MultiplierIdealsMeromorphic(f, g : MinJN:=MinJN, MaxJN:=MaxJN, ComputeIdeals:=ComputeIdeals);
     ////////////////////
     
     // printf "%o\n", [t[2] : t in S];
     // S;
+    if ComputeIdeals then
+        for t in S do
+            gen := t[1];
+            JN := t[2];
+            printf "\nJN = %o\n", JN;
+            if (gen[1][2] eq 0) then
+                printf "Generators:\n%o\n", gen[2];
+            else
+                printf "Generators:\n( %o )^%o * %o\n", gen[1][1], gen[1][2], gen[2];
+            end if;
+        end for;
+    end if;
     
     // f := (y^2-x^3)*x;
     // f := (x^2-y^3)*(y^2-x^3);
@@ -117,28 +147,36 @@ for s in A do
     // S := MultiplierIdeals(f : MaxJN:=3);
     // S;
     
-    if printToFile then
-        SetOutputFile(outFileName : Overwrite := false);
-    end if;
+    // if printToFile then
+    //     SetOutputFile(outFileName : Overwrite := false);
+    // end if;
     
     ////////////////////
     // printf "\nJN:\n%o\n", [t[2] : t in S];
     ////////////////////
-    printf "\nJN:\n";
-    for m in [Floor(MinJN)..(Ceiling(MaxJN)-1)] do
-        printf "%o\n", [t[2] : t in S | (m le t[2]) and (t[2] lt (m+1))];
-    end for;
-    den := LCM([Denominator(t[2]) : t in S]);
-    // printf "\nNumerators:\n%o\n", [t[2]*den : t in S];
-    printf "\nNumerators:\n";
-    for m in [Floor(MinJN)..(Ceiling(MaxJN)-1)] do
-        printf "%o\n", [t[2]*den : t in S | (m le t[2]) and (t[2] lt (m+1))];
-    end for;
     
-    printf "\nNumerators - floor:\n";
-    for m in [Floor(MinJN)..(Ceiling(MaxJN)-1)] do
-        printf "%o + %o\n", m, [(t[2]-m)*den : t in S | (m le t[2]) and (t[2] lt (m+1))];
-    end for;
+    if printJN then
+        printf "\nJN:\n";
+        for m in [Floor(MinJN)..(Ceiling(MaxJN)-1)] do
+            printf "%o\n", [t[2] : t in S | (m le t[2]) and (t[2] lt (m+1))];
+        end for;
+    end if;
+        
+    // den := LCM([Denominator(t[2]) : t in S]);
+    // // printf "\nNumerators:\n%o\n", [t[2]*den : t in S];
+    // printf "\nNumerators:\n";
+    // for m in [Floor(MinJN)..(Ceiling(MaxJN)-1)] do
+    //     printf "%o\n", [t[2]*den : t in S | (m le t[2]) and (t[2] lt (m+1))];
+    // end for;
+    
+    if printJN_fract then
+        printf "\nJN - floor:\n";
+        for m in [Floor(MinJN)..(Ceiling(MaxJN)-1)] do
+            printf "%o + %o\n", m, [(t[2]-m) : t in S | (m le t[2]) and (t[2] lt (m+1))];
+        end for;
+    end if;
+    
+    printf "\n";
     
     if printToFile then
         UnsetOutputFile();
