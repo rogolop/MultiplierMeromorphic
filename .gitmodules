@@ -1,3 +1,3 @@
 [submodule "SingularitiesDim2"]
 	path = SingularitiesDim2
-	url = ./SingularitiesDim2/
+	url = git@github.com:rogolop/SingularitiesDim2.git
