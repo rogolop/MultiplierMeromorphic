@@ -1,12 +1,7 @@
-
-
-
 import "SingularitiesDim2/ProximityMatrix.m": ProximityMatrixImpl, CoefficientsVectorBranch;
 import "SingularitiesDim2/LogResolution.m": ComputeLogResolutionData, ExpandWeightedCluster;
 import "SingularitiesDim2/IntegralClosure.m": Unloading; 
 // IntegralClosureIrreducible, ProductIdeals, ClusterFactorization;
-
-
 
 
 intrinsic LogResolutionMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt : Coefficients := false) -> []
@@ -86,21 +81,18 @@ intrinsic LogResolutionMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt : Coeffici
   // Select 1 as affine part iff F is a unit.
   F := Evaluate(F, <0, 0>) ne 0 select Parent(F)!1 else F;
   
-  
-  
-  A := V[1];
-  B := V[2];
+  A := V[1]; // values of f
+  B := V[2]; // values of g
   
   // printf "e = %o\n", e;
   // printf "v = %o\n", v;
   printf "A = %o\n", A;
-  // printf "eA = %o\n", A * Transpose(P);
+  // printf "eA = %o\n", A * Transpose(P); // multiplicities of f
   Excess_f := A* Transpose(P)*P;
   printf "B = %o\n", B;
-  // printf "eB = %o\n", B * Transpose(P);
+  // printf "eB = %o\n", B * Transpose(P); // multiplicities of g
   
   printf "C = %o\n", C;
-  
   
   // AmB := Matrix(IntegerRing(), 1, Ncols(A), [Max([A[1,i]-B[1,i], 0]) : i in [1..Ncols(A)]]);
   AmB := ZeroMatrix(IntegerRing(), 1, Ncols(P));
@@ -113,44 +105,29 @@ end intrinsic;
 
 
 
-
-
-// intrinsic MultiplierIdealsMeromorphic_I(I::RngMPolLoc : MaxJN := 1) -> []
-// { Computes the Multiplier Ideals and its associated Jumping Number for an
-//   m-primary ideal in a smooth complex surface using the algorithm
-//   of Alberich-Alvarez-Dachs }
-// // TODO: Fix this requiriment. This would involve getting the proximity matrix
-// // of a non m-primary ideal. This means merging the affine part resolution.
-// require Gcd(Basis(I)) eq 1: "Ideal must be m-primary";
-
-//   P, F, _, C := LogResolutionMeromorphic(I: Coefficients := true);
-//   QQ := Rationals();
-//   F := ChangeRing(Matrix(F), QQ);
-//   PQ := ChangeRing(P, QQ);
-//   ZZ := Integers();
-//   PQTinv := Transpose(PQ)^-1;
-//   k := Universe(Basis(I));
-//   n := Ncols(P);
-//   // Compute relative canonical divisor.
-//   K := Matrix([[QQ | 1 : i in [1..n]]]);
-//   K := K*PQTinv;
-//   // Compute the intersection matrix
-//   N := Transpose(PQ)*PQ;
-
-//   JN := 0; S := [];
-//   while JN lt MaxJN do
-//     D := Unloading(N, Matrix([[QQ | Floor(ei) : ei in Eltseq(JN*F - K)]]));
-//     lastJN := JN;
-//     JN, i := Min([(K[1][i] + 1 + D[1][i])/F[1][i] : i in [1..n] | F[1][i] ne 0]);
-//     S cat:= [<GeneratorsOXD(P, ChangeRing(D, ZZ), C, k), lastJN>];
-//   end while; return S;
-// end intrinsic;
-
-
-intrinsic MultiplierIdealsMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt : MinJN:=0, MaxJN:=1, ComputeIdeals:=true) -> []
+intrinsic MultiplierIdealsMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt : MinJN:=0, MaxJN:=1, ComputeIdeals:=true) -> List
 { Computes the Multiplier Ideals and its associated Jumping Number for an
   plane curve in a smooth complex surface using the algorithm
-  of Alberich-Alvarez-Dachs }
+  of Alberich-Alvarez-Dachs.
+  
+  Returns:
+      [* dataJN1, dataJN2, ... *]
+  
+  "dataJNi" is the data corresponding to a jumping number:
+      <
+        data of the multiplier ideal (only if ComputeIdeals is true),
+        jumping number
+      >
+  
+  Data of the multiplier ideal:
+      <
+        < f, exponent of common f >,
+        [ generator1, generator2, ... ]
+      >
+  
+  The multiplier ideal represented by this data is:
+      f^(exponent of common f) * (generator1, generator2, ...)
+  }
 
   // With the extra point there is no confusion whether and affine component
   // has multiplicity or not.
@@ -196,41 +173,44 @@ intrinsic MultiplierIdealsMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt : MinJN
   A := HorizontalJoin(A, Matrix(QQ, [[StrF[1][i] : i in idxAff]]));
 
   // printf "F = %o\n", F;
-
-  JN := MinJN; S := [];
+  
+  printf "\n";
+  JN := MinJN; S := [**];
   while JN lt MaxJN do
     printf ".";
     D := Unloading(N, Matrix([[QQ | Floor(ei) : ei in Eltseq(JN*F - K)]]));
     // printf "JN*F - K = %o\n", Matrix([[QQ | Floor(ei) : ei in Eltseq(JN*F - K)]]);
     printf "D = %o\n", D;
-    lastJN := JN;
     
-    jnfmk := Matrix([[QQ | Floor((JN*F - K)[1][i]) - Floor(lastJN) * A[1][i] : i in [1..(n+nAffComp)]]]);
+    jnfmk := Matrix([[QQ | Floor((JN*F - K)[1][i]) - Floor(JN) * A[1][i] : i in [1..(n+nAffComp)]]]);
     printf "JN*F - K menys f... = %o\n", jnfmk;
     printf "Unload(JN*F - K menys f...) = %o\n", Unloading(N, jnfmk);
     
-    
-    if ComputeIdeals then
-      D2 := Matrix([[QQ | D[1][i] - Floor(lastJN) * A[1][i] : i in [1..(n+nAffComp)]]]);
-      printf "Divisor per O(D): %o\n", D2;
-      DZZ := ColumnSubmatrix(ChangeRing(D2, ZZ), n);
-      gen := GeneratorsOXD(P, DZZ, C, k);
-      if gen eq [] then gen := [1]; end if;
-      gen := [*[f,Floor(lastJN)], gen*];
-      
-      S cat:= [<gen, lastJN>];
-    else
-      S cat:= [<0, lastJN>];
+    if JN ne 0 then
+      if ComputeIdeals then
+        D2 := Matrix([[QQ | D[1][i] - Floor(JN) * A[1][i] : i in [1..(n+nAffComp)]]]);
+        printf "Divisor per O(D): %o\n", D2;
+        DZZ := ColumnSubmatrix(ChangeRing(D2, ZZ), n);
+        gen := GeneratorsOXD(P, DZZ, C, k);
+        // gen := [Factorization(h) : h in gen];
+        // if gen eq [] then gen := [Parent(f)!1]; end if;
+        // if gen eq [] then gen := [[<Parent(f)!1,1>]]; end if;
+        gen := < <f,Floor(JN)>, gen >;
+        S cat:= [*<gen, JN>*];
+      else
+        S cat:= [*<0, JN>*];
+      end if;
     end if;
     
-    
+    lastJN := JN;
     JN, i := Min([(K[1][i] + 1 + D[1][i])/F[1][i] : i in [1..(n+nAffComp)] | F[1][i] gt 0]);
     // printf "%o\n", [(K[1][i] + 1 + D[1][i])/F[1][i] : i in [1..(n+nAffComp)] | F[1][i] ne 0];
     // printf "JN = %o, i = %o\n", JN, i;
     
     printf "\nJN = %-15o, i = %o\n", JN, [j : j in [1..(n+nAffComp)] | F[1][j] ne 0 and (K[1][j] + 1 + D[1][j])/F[1][j] eq JN];
-    
-  end while; return S;
+        
+  end while;
+  return S;
 end intrinsic;
 
 
