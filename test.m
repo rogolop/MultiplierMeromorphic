@@ -17,8 +17,6 @@ outFileNameSufix  := ".txt";
 
 A := [];
 
-// Bernstein-Sato...
-
 // Append(~A, "y^3+x^5, x");
 // Append(~A, "y^3+x^5, y");
 // Append(~A, "y^3+x^5, 1");
@@ -52,11 +50,12 @@ A := [];
 // Append(~A, "(y^2-x^3)^5 + x^18, (y^2-x^3)^3");
 // Append(~A, "(y^2-x^3)^5 + x^18, (y^2-x^3)^4");
 // Append(~A, "(y^2-x^3)^5 + x^18, (y^2-x^3)^5");
+// Append(~A, "(y^2-x^3)^5 + x^18, (y^2-x^3)^6");
 // Append(~A, "(y^2-x^3)^5 + x^18, y^2+x^3");
 // Append(~A, "(y^2-x^3)^5 + x^18, x^2+y^3");
 
 // Append(~A, "(y^2-x^3)^4 + x^8*y^5, y^2-x^3");
-Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^1");
+// Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^1");
 // Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^2");
 // Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^3");
 // Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^4");
