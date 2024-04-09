@@ -25,51 +25,51 @@ intrinsic LogResolutionMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt : Coeffici
   v := []; // Virtual values of BP(I).
   ComputeLogResolutionData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v);
 
-  // /////////////// Add new free points /////////////////////
-  // lastFree := [i : i in [1..Ncols(P)] | (&+P[1..Ncols(P)])[i] eq 1];
-  // points2test := #lastFree; idx := 1;
-  // // For each last free point on a branch...
-  // while points2test gt 0 do
-  //   // Values for each gen. at p.
-  //   p := lastFree[idx]; Vp := [vi[1][p] : vi in V];
-  //   // Generators achieving the minimum.
-  //   GG := [i : i in [1..#Vp] | Vp[i] eq Min(Vp)];
-  //   // If the multiplicities of all the generators achieving the minimum
-  //   // at p is > 0 add new point.
-  //   if &and[E[g][1][p] ne 0 : g in GG] then
-  //     // The (unique) branch of the generator 'g' where 'p' belongs.
-  //     assert(#[i : i in [1..#EE] | EE[i][1, p] ne 0] eq 1);
-  //     b := [i : i in [1..#EE] | EE[i][1, p] ne 0][1];
-  //     ExpandWeightedCluster(~P, ~EE, ~CC, ~S, b); P[Ncols(P)][p] := -1;
-  //     ComputeLogResolutionData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v);
-  //     // We may need to add more free points after the points we added.
-  //     lastFree cat:= [Ncols(P)]; points2test := points2test + 1;
-  //   end if;
-  // points2test := points2test - 1; idx := idx + 1;
-  // end while;
+  /////////////// Add new free points /////////////////////
+  lastFree := [i : i in [1..Ncols(P)] | (&+P[1..Ncols(P)])[i] eq 1];
+  points2test := #lastFree; idx := 1;
+  // For each last free point on a branch...
+  while points2test gt 0 do
+    // Values for each gen. at p.
+    p := lastFree[idx]; Vp := [vi[1][p] : vi in V];
+    // Generators achieving the minimum.
+    GG := [i : i in [1..#Vp] | Vp[i] eq Min(Vp)];
+    // If the multiplicities of all the generators achieving the minimum
+    // at p is > 0 add new point.
+    if &and[E[g][1][p] ne 0 : g in GG] then
+      // The (unique) branch of the generator 'g' where 'p' belongs.
+      assert(#[i : i in [1..#EE] | EE[i][1, p] ne 0] eq 1);
+      b := [i : i in [1..#EE] | EE[i][1, p] ne 0][1];
+      ExpandWeightedCluster(~P, ~EE, ~CC, ~S, b); P[Ncols(P)][p] := -1;
+      ComputeLogResolutionData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v);
+      // We may need to add more free points after the points we added.
+      lastFree cat:= [Ncols(P)]; points2test := points2test + 1;
+    end if;
+  points2test := points2test - 1; idx := idx + 1;
+  end while;
 
-  // /////////////// Add new satellite points /////////////////////
-  // points2test := Ncols(P) - 1; p := 2; // Do not start at the origin.
-  // while points2test gt 0 do
-  //   // Values for the generators at point p.
-  //   Vp := [vi[1][p] - v[1][p] : vi in V];
-  //   // Points p is proximate to && Points proximate to p.
-  //   p_prox := [i : i in [1..Ncols(P)] | P[p][i] eq -1];
-  //   prox_p := [i : i in [1..Ncols(P)] | P[i][p] eq -1];
-  //   Q := [q : q in p_prox | &+Eltseq(Submatrix(P, prox_p, [q])) eq 0];
-  //   for q in Q do
-  //     // Values for the generators at point q.
-  //     Vq := [vi[1][q] - v[1][q] : vi in V];
-  //     if &*[Vp[i] + Vq[i] : i in [1..#Vp]] ne 0 then
-  //       ExpandWeightedCluster(~P, ~EE, ~CC, ~S, -1);
-  //       P[Ncols(P)][p] := -1; P[Ncols(P)][q] := -1;
-  //       ComputeLogResolutionData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v);
-  //       // We may need to add more satellite points after the points we added.
-  //       points2test := points2test + 1;
-  //     end if;
-  //   end for;
-  // points2test := points2test - 1; p := p + 1;
-  // end while;
+  /////////////// Add new satellite points /////////////////////
+  points2test := Ncols(P) - 1; p := 2; // Do not start at the origin.
+  while points2test gt 0 do
+    // Values for the generators at point p.
+    Vp := [vi[1][p] - v[1][p] : vi in V];
+    // Points p is proximate to && Points proximate to p.
+    p_prox := [i : i in [1..Ncols(P)] | P[p][i] eq -1];
+    prox_p := [i : i in [1..Ncols(P)] | P[i][p] eq -1];
+    Q := [q : q in p_prox | &+Eltseq(Submatrix(P, prox_p, [q])) eq 0];
+    for q in Q do
+      // Values for the generators at point q.
+      Vq := [vi[1][q] - v[1][q] : vi in V];
+      if &*[Vp[i] + Vq[i] : i in [1..#Vp]] ne 0 then
+        ExpandWeightedCluster(~P, ~EE, ~CC, ~S, -1);
+        P[Ncols(P)][p] := -1; P[Ncols(P)][q] := -1;
+        ComputeLogResolutionData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v);
+        // We may need to add more satellite points after the points we added.
+        points2test := points2test + 1;
+      end if;
+    end for;
+  points2test := points2test - 1; p := p + 1;
+  end while;
 
   /////////////// Remove non base points ////////////////
   // Multiplicities for the cluster of base points.
@@ -97,6 +97,7 @@ intrinsic LogResolutionMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt : Coeffici
   // AmB := Matrix(IntegerRing(), 1, Ncols(A), [Max([A[1,i]-B[1,i], 0]) : i in [1..Ncols(A)]]);
   AmB := ZeroMatrix(IntegerRing(), 1, Ncols(P));
   for i in [1..Ncols(P)] do AmB[1][i] := Max([A[1,i]-B[1,i], 0]); end for;
+  printf "AmB (>0) = %o\n", AmB;
   
   if Coefficients then return P, AmB, F, C, Excess_f, A;
   else return P, AmB, F, Excess_f, A; end if;

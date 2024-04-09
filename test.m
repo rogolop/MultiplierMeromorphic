@@ -9,7 +9,7 @@ ComputeIdeals     := true;
 printJN           := true;
 printJN_fract     := true;
 MinJN             := 0;
-MaxJN             := 3;
+MaxJN             := 4;
 outFileNamePrefix := "examples/";
 outFileNameSufix  := ".txt";
 
@@ -55,7 +55,7 @@ A := [];
 // Append(~A, "(y^2-x^3)^5 + x^18, x^2+y^3");
 
 // Append(~A, "(y^2-x^3)^4 + x^8*y^5, y^2-x^3");
-// Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^1");
+Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^1");
 // Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^2");
 // Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^3");
 // Append(~A, "(y^2-x^3)^4 + x^8*y^5, (y^2-x^3)^4");
