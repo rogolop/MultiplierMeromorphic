@@ -1,4 +1,4 @@
-# MultiplierMmeromorphic
+# MultiplierMeromorphic
 Implementation in Magma of an algorithm to calculate multiplier ideals of meromorphic functions.
 
 ## Requirements
