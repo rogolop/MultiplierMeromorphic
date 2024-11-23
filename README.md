@@ -29,13 +29,6 @@ in the range $\lambda\in(0,2)$.
 > f := (y^2-x^3)^4 + x^8*y^5;
 > g := y^2-x^3;
 > Nf, Ng, N, Prox := LogResolutionMeromorphic(f, g);
-> Js := MultiplierIdealsMeromorphic(f, g : MinJN:=0, MaxJN:=2, ComputeIdeals:=true);
+> S := MultiplierIdealsMeromorphic(f, g : MinJN:=0, MaxJN:=2, ComputeIdeals:=true);
 ```
-
-### Output
-- `Nf`: 
-- `Ng`: 
-- `N`: 
-- `Prox`: 
-- `S`: 
 
