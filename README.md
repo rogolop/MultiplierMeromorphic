@@ -1,4 +1,4 @@
-# multiplier_meromorphic
+# MultiplierMmeromorphic
 Implementation in Magma of an algorithm to calculate multiplier ideals of meromorphic functions.
 
 ## Requirements
@@ -9,16 +9,16 @@ Implementation in Magma of an algorithm to calculate multiplier ideals of meromo
 ## Usage example
 
 Calculate the minimal log-resolution of $\frac{f}{g}$ and the multiplier ideals
-$$
-    \mathcal{J}\left(\left(\frac{f}{g}\right)^\lambda\right)
-$$
+```math
+\mathcal{J}\left(\left(\frac{f}{g}\right)^\lambda\right)
+```
 for
-$$
-    \begin{align*}
+```math
+\begin{align*}
         &f = (y^2-x^3)^4 + x^8 y^5 ,
         \\ &g = y^2-x^3 ,
     \end{align*}
-$$
+```
 in the range $\lambda\in(0,4)$.
 
 ### Magma
