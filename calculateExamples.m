@@ -94,6 +94,14 @@ for s in A do
     printf "g =%o\n\n", Split(s, ",")[2];
     
     // if printToFile then UnsetOutputFile(); end if;
+	Nf, Ng, N, Prox, commonFactor, Coeffs := LogResolutionMeromorphic(f, g);
+    printf "Nf = %o\n", Nf;
+    printf "Ng = %o\n", Ng;
+    printf "N (>0) = %o\n", N;
+    printf "Prox = \n%o\n", Prox;
+    printf "commonFactor = \n%o\n", commonFactor;
+    printf "Coeffs = %o\n", Coeffs;
+    
     S := MultiplierIdealsMeromorphic(f, g : MinJN:=MinJN, MaxJN:=MaxJN, ComputeIdeals:=ComputeIdeals);
     // if printToFile then SetOutputFile(outFileName : Overwrite := false); end if;
     
@@ -110,10 +118,10 @@ for s in A do
         if g ne (P!1) then factorNames[g] := "g"; end if;
         
         printf "\n";
-        JNPrintLength := - Max([5] cat [#Sprint(t[2]) : t in S]);
+        JNPrintLength := - Max([5] cat [#Sprint(t[1]) : t in S]);
         for t in S do
-            gen := t[1];
-            JN := t[2];
+            JN := t[1];
+            gen := t[2];
             printf "%*o | ", JNPrintLength, JN;
             powerOfF := gen[1][2];
             gen := gen[2];
@@ -171,21 +179,21 @@ for s in A do
     if printJN then
         printf "\nJN:\n\n";
         for m in [Floor(MinJN)..(Ceiling(MaxJN)-1)] do
-            printf "%o\n\n", [t[2] : t in S | (m le t[2]) and (t[2] lt (m+1))];
+            printf "%o\n\n", [t[1] : t in S | (m le t[1]) and (t[1] lt (m+1))];
         end for;
     end if;
     
-    // den := LCM([Denominator(t[2]) : t in S]);
-    // // printf "\nNumerators:\n%o\n", [t[2]*den : t in S];
+    // den := LCM([Denominator(t[1]) : t in S]);
+    // // printf "\nNumerators:\n%o\n", [t[1]*den : t in S];
     // printf "\nNumerators:\n";
     // for m in [Floor(MinJN)..(Ceiling(MaxJN)-1)] do
-    //     printf "%o\n", [t[2]*den : t in S | (m le t[2]) and (t[2] lt (m+1))];
+    //     printf "%o\n", [t[1]*den : t in S | (m le t[1]) and (t[1] lt (m+1))];
     // end for;
     
     if printJN_fract then
         printf "JN fract:\n\n";
         for m in [Floor(MinJN)..(Ceiling(MaxJN)-1)] do
-            printf "%o + %o\n\n", m, [(t[2]-m) : t in S | (m le t[2]) and (t[2] lt (m+1))];
+            printf "%o + %o\n\n", m, [(t[1]-m) : t in S | (m le t[1]) and (t[1] lt (m+1))];
         end for;
     end if;
     
