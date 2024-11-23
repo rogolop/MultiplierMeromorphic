@@ -5,8 +5,7 @@ import "SingularitiesDim2/IntegralClosure.m": Unloading;
 
 
 intrinsic LogResolutionMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt) -> []
-{ Computes the weighted cluster of base points of a bivariate
-	polynomial ideal I }
+{ Computes the weighted cluster of base points of a bivariate meromorphic ideal (f/g) }
 	// Generators in G & fixed part commonFactor.
 	G := [f, g]; //Basis(I);
 	commonFactor := Gcd(G); G := [ExactQuotient(h, commonFactor) : h in G];
@@ -108,27 +107,7 @@ end intrinsic;
 
 
 intrinsic MultiplierIdealsMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt : MinJN:=0, MaxJN:=1, ComputeIdeals:=true) -> List
-{ Computes the Multiplier Ideals and its associated Jumping Number for an
-	plane curve in a smooth complex surface using the algorithm
-	of Alberich-Alvarez-Dachs.
-	
-	Returns:
-		[* dataJN1, dataJN2, ... *]
-	
-	"dataJNi" is the data corresponding to a jumping number:
-		<
-			jumping number,
-			data of the multiplier ideal (only if ComputeIdeals is true)
-		>
-	
-	Data of the multiplier ideal:
-		<
-			< f, exponent of common f >,
-			[ generator1, generator2, ... ]
-		>
-	
-	The multiplier ideal represented by this data is:
-		f^(exponent of common f) * (generator1, generator2, ...)
+{ Computes the Multiplier Ideals and their associated Jumping Numbers for a meromorphic function f/g, using the algorithm of Alberich-Alvarez-Gomez. Returns a list of tuples of the form: <jumping number, <fExponent, generators>>. The multiplier ideal represented by this data is: f^fExponent * (generators). If ComputeIdeals is set to false, the output tuples are: <jumping number, 0>.
 }
 
 	// With the extra point there is no confusion whether and affine component
@@ -159,26 +138,27 @@ intrinsic MultiplierIdealsMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt : MinJN
 	
 	// Compute the extended intersection matrix by the stict transform components.
 	Intersect := Transpose(ProxQ)*ProxQ;
-	StrF := Excess_f;
-	// StrF := EQ*ProxQ;
-	nAffComp := #[1 : i in [1..n] | StrF[1][i] ne 0];
+	// StrF := Excess_f;
+	// Excess_f := EQ*ProxQ;
+	nAffComp := #[1 : i in [1..n] | Excess_f[1][i] ne 0];
 	Intersect := DiagonalJoin(Intersect, ZeroMatrix(QQ, nAffComp)); //-IdentityMatrix(QQ, nAffComp));
-	idxAff := [i : i in [1..n] | StrF[1][i] ne 0];
+	idxAff := [i : i in [1..n] | Excess_f[1][i] ne 0];
 	for i in [1..nAffComp] do Intersect[n + i][idxAff[i]] := -1; end for;
-	// for i in [1..nAffComp] do Intersect[n + i][idxAff[i]] := -StrF[1][idxAff[i]]; end for;
+	// for i in [1..nAffComp] do Intersect[n + i][idxAff[i]] := -Excess_f[1][idxAff[i]]; end for;
 	// printf "Intersect = \n%o\n", Intersect;
 	
 	// F := HorizontalJoin(F, Matrix(QQ, [[1 : i in [1..nAffComp]]]));
-	F := HorizontalJoin(F, Matrix(QQ, [[StrF[1][i] : i in idxAff]]));
+	F := HorizontalJoin(F, Matrix(QQ, [[Excess_f[1][i] : i in idxAff]]));
 	K := HorizontalJoin(K, Matrix(QQ, [[0 : i in [1..nAffComp]]]));
 	
 	Nf := ChangeRing(Nf, QQ);
-	Nf := HorizontalJoin(Nf, Matrix(QQ, [[StrF[1][i] : i in idxAff]]));
+	Nf := HorizontalJoin(Nf, Matrix(QQ, [[Excess_f[1][i] : i in idxAff]]));
 
 	// printf "F = %o\n", F;
 	
 	// printf "\n";
-	JN := MinJN; Out := [**];
+	JN := MinJN;
+	Out := [**];
 	while JN lt MaxJN do
 		// printf "JN = %o\n", JN;
 		
@@ -196,7 +176,8 @@ intrinsic MultiplierIdealsMeromorphic(f::RngMPolLocElt, g::RngMPolLocElt : MinJN
 				// printf "Divisor per O(D): %o\n", D2;
 				DZZ := ColumnSubmatrix(ChangeRing(D2, ZZ), n);
 				gen := GeneratorsOXD(Prox, DZZ, Coeffs, k);
-				gen := < <f,Floor(JN)>, gen >;
+				if gen eq [] then gen := [Parent(f)| 1 ]; end if;
+				gen := < Floor(JN), gen >;
 				Out cat:= [*<JN, gen>*];
 			else
 				Out cat:= [*<JN, 0>*];

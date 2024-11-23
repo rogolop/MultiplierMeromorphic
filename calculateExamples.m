@@ -119,16 +119,21 @@ for s in A do
         
         printf "\n";
         JNPrintLength := - Max([5] cat [#Sprint(t[1]) : t in S]);
+        printf "%*o | Multiplier ideal\n", JNPrintLength, "JN";
+        printf "-"^(-JNPrintLength)*"-|-----------------\n";
         for t in S do
             JN := t[1];
             gen := t[2];
             printf "%*o | ", JNPrintLength, JN;
-            powerOfF := gen[1][2];
+            powerOfF := gen[1];
             gen := gen[2];
             
             // printf "gen = %o\n", gen;
-            gen := [Factorization(h) : h in gen];
-            if gen eq [] then gen := [[<Parent(f)!1,1>]]; end if;
+            if gen eq [P| 1 ] then
+                gen := [[<Parent(f)!1,1>]];
+            else
+                gen := [Factorization(h) : h in gen];
+            end if;
             
             if powerOfF gt 0 then
                 printf "f";
